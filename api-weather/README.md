@@ -1,54 +1,247 @@
 
 
 ```python
-# Dependencies
+import os
+import csv
+import json
+import requests
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import os
 import seaborn as sns
 
+from citipy import citipy
+from random import uniform
 
-#city data
-city_file_name = os.path.join("resources", "city_data.csv")
-city_file = pd.read_csv(city_file_name)
-city_df = pd.DataFrame(city_file)
-#create new columns City, Driver Count, Type  
-city_df[['city','driver_count','type']] = city_df['city,driver_count,type'].str.split(',', expand=True)
-city_df = city_df.drop('city,driver_count,type', axis=1)
-city_df['driver_count'].fillna(0)
-city_df['driver_count'] = city_df['driver_count'].astype(int)
 
-#ride data
-ride_file_name = os.path.join("resources", "ride_data.csv")
-ride_file = pd.read_csv(ride_file_name)
-ride_df = pd.DataFrame(ride_file)
-#create new columns City, Driver Count, Type  
-ride_df[['city','date','fare','ride_id']] = ride_df['city,date,fare,ride_id'].str.split(',', expand=True)
-ride_df = ride_df.drop('city,date,fare,ride_id', axis=1)
-#format date
-ride_df['date'] =  pd.to_datetime(ride_df['date'])
-#replace all NaN with zero
-ride_df['fare'].fillna(0)
+```
 
-#compute total fares 
-ride_df['fare'] = ride_df['fare'].astype(float)
-total_fares = ride_df.groupby('city')['fare'].sum()
-total_fares = total_fares.reset_index()
-total_fares['fare'] = total_fares['fare'].fillna(0)
 
-#compute ride count
-ride_count = ride_df.groupby('city')['ride_id'].count()
-ride_count = ride_count.reset_index()
-ride_count['ride_id'] = ride_count['ride_id'].fillna(0)
+```python
+#open weather api
+url = "http://api.openweathermap.org/data/2.5/weather?"
+units = "imperial"
+weather_api_key = "25bc90a1196e6f153eece0bc0b0fc9eb"
 
-#the result of inner and outer joins are the same
-first_pair_df = pd.merge(city_df,total_fares,how='outer',on='city')  
-combined_df = pd.merge(first_pair_df,ride_count,how='outer',on='city')  
+#partial query URL
+query_url = url + "appid=" + weather_api_key + "&units=" + units + "&q="
+```
 
-combined_df.rename(columns={'ride_id': 'ride_count'},inplace=True)
-combined_df['average_fare'] = combined_df['fare'] / combined_df['ride_count'] 
-combined_df.head()
+
+```python
+#randomly generate latitude and longitude pairs
+def newpoint():
+   return uniform(-90,90), uniform(-180, 180)
+```
+
+
+```python
+cities_df = pd.DataFrame(columns={"city","url","temperature","latitude","longitude",
+                                  "humidity","cloudiness","wind_speed"},index=np.arange(500))
+
+cities = []
+index = 0
+
+#generate random coordinates
+points = (newpoint() for x in range(5000))
+
+#loop thru the points
+for point in points:
+
+    #find nearest city by coordinates
+    city = citipy.nearest_city(point[0],point[1])
+    
+    #make sure that city is not already in the cities list
+    if not city.city_name in cities:
+       
+        #get weather info
+        city_url = query_url + city.city_name
+        response = requests.get(city_url).json()
+
+        if 'main' not in response:
+            print(f'weather in city {city.city_name} not found')
+        else:
+            #save selected cities
+            cities.append(city.city_name)
+
+            #update row values
+            cities_df.loc(index)[index]["city"] = city.city_name
+            cities_df.loc(index)[index]["url"] = city_url
+            cities_df.loc(index)[index]["temperature"] = response["main"]["temp"]
+            cities_df.loc(index)[index]["latitude"] = response["coord"]["lat"]
+            cities_df.loc(index)[index]["longitude"] = response["coord"]["lon"]
+            cities_df.loc(index)[index]["humidity"] = response["main"]["humidity"]
+            cities_df.loc(index)[index]["cloudiness"] = response["clouds"]["all"]
+            cities_df.loc(index)[index]["wind_speed"] = response["wind"]["speed"]
+            
+            #increment the index
+            index = index + 1
+            if index == 500:
+                break
+
+
+```
+
+    weather in city bengkulu not found
+    weather in city katsiveli not found
+    weather in city satitoa not found
+    weather in city illoqqortoormiut not found
+    weather in city chagda not found
+    weather in city belushya guba not found
+    weather in city mys shmidta not found
+    weather in city kamenskoye not found
+    weather in city illoqqortoormiut not found
+    weather in city karaul not found
+    weather in city samusu not found
+    weather in city tome-acu not found
+    weather in city mananara not found
+    weather in city karmana not found
+    weather in city attawapiskat not found
+    weather in city barentsburg not found
+    weather in city malwan not found
+    weather in city vaitupu not found
+    weather in city barentsburg not found
+    weather in city tsihombe not found
+    weather in city belushya guba not found
+    weather in city grand river south east not found
+    weather in city sentyabrskiy not found
+    weather in city louisbourg not found
+    weather in city illoqqortoormiut not found
+    weather in city barentsburg not found
+    weather in city attawapiskat not found
+    weather in city hurghada not found
+    weather in city alappuzha not found
+    weather in city guelengdeng not found
+    weather in city mys shmidta not found
+    weather in city malwan not found
+    weather in city barentsburg not found
+    weather in city sentyabrskiy not found
+    weather in city illoqqortoormiut not found
+    weather in city sentyabrskiy not found
+    weather in city urumqi not found
+    weather in city tumannyy not found
+    weather in city tsihombe not found
+    weather in city fevralsk not found
+    weather in city amderma not found
+    weather in city azimur not found
+    weather in city mys shmidta not found
+    weather in city sentyabrskiy not found
+    weather in city illoqqortoormiut not found
+    weather in city illoqqortoormiut not found
+    weather in city sentyabrskiy not found
+    weather in city barentsburg not found
+    weather in city umzimvubu not found
+    weather in city taolanaro not found
+    weather in city vaitupu not found
+    weather in city attawapiskat not found
+    weather in city attawapiskat not found
+    weather in city sentyabrskiy not found
+    weather in city nizhneyansk not found
+    weather in city bengkulu not found
+    weather in city labutta not found
+    weather in city belushya guba not found
+    weather in city sentyabrskiy not found
+    weather in city taolanaro not found
+    weather in city saleaula not found
+    weather in city nizhneyansk not found
+    weather in city illoqqortoormiut not found
+    weather in city korla not found
+    weather in city sentyabrskiy not found
+    weather in city tsihombe not found
+    weather in city palabuhanratu not found
+    weather in city maarianhamina not found
+    weather in city nguiu not found
+    weather in city ngukurr not found
+    weather in city bengkulu not found
+    weather in city illoqqortoormiut not found
+    weather in city asau not found
+    weather in city vaitupu not found
+    weather in city dien bien not found
+    weather in city taolanaro not found
+    weather in city barentsburg not found
+    weather in city rolim de moura not found
+    weather in city tambul not found
+    weather in city taolanaro not found
+    weather in city asau not found
+    weather in city nizhneyansk not found
+    weather in city barentsburg not found
+    weather in city tiglawigan not found
+    weather in city samusu not found
+    weather in city yanan not found
+    weather in city halalo not found
+    weather in city mys shmidta not found
+    weather in city labutta not found
+    weather in city siddharthanagar not found
+    weather in city palabuhanratu not found
+    weather in city ozgon not found
+    weather in city belushya guba not found
+    weather in city asau not found
+    weather in city asau not found
+    weather in city rungata not found
+    weather in city taolanaro not found
+    weather in city sakakah not found
+    weather in city grand river south east not found
+    weather in city illoqqortoormiut not found
+    weather in city kismayo not found
+    weather in city samalaeulu not found
+    weather in city taolanaro not found
+    weather in city raga not found
+    weather in city aban not found
+    weather in city taburi not found
+    weather in city lolua not found
+    weather in city kuche not found
+    weather in city taolanaro not found
+    weather in city akyab not found
+    weather in city illoqqortoormiut not found
+    weather in city amderma not found
+    weather in city attawapiskat not found
+    weather in city mys shmidta not found
+    weather in city belushya guba not found
+    weather in city mahadday weyne not found
+    weather in city saleaula not found
+    weather in city palabuhanratu not found
+    weather in city taolanaro not found
+    weather in city bengkulu not found
+    weather in city aban not found
+    weather in city samusu not found
+    weather in city vaitupu not found
+    weather in city belushya guba not found
+    weather in city koungou not found
+    weather in city buqayq not found
+    weather in city barentsburg not found
+    weather in city karkaralinsk not found
+    weather in city barentsburg not found
+    weather in city nizhneyansk not found
+    weather in city barentsburg not found
+    weather in city belushya guba not found
+    weather in city taolanaro not found
+    weather in city illoqqortoormiut not found
+    weather in city amderma not found
+    weather in city cagayan de tawi-tawi not found
+    weather in city tsihombe not found
+    weather in city barentsburg not found
+    weather in city warqla not found
+    weather in city taolanaro not found
+    weather in city chagda not found
+    weather in city palaiokhora not found
+    weather in city solsvik not found
+    weather in city taolanaro not found
+    
+
+
+```python
+cities_df['city'] = cities_df['city'].astype(str)
+cities_df['url'] = cities_df['url'].astype(str)
+cities_df['temperature'] = cities_df['temperature'].astype(float)
+cities_df['humidity'] = cities_df['humidity'].astype(float)
+cities_df['latitude'] = cities_df['latitude'].astype(float)
+cities_df['longitude'] = cities_df['longitude'].astype(float)
+cities_df['cloudiness'] = cities_df['cloudiness'].astype(float)
+cities_df['wind_speed'] = cities_df['wind_speed'].astype(float)
+
+
+cities_df.head()
+
 ```
 
 
@@ -72,59 +265,71 @@ combined_df.head()
   <thead>
     <tr style="text-align: right;">
       <th></th>
+      <th>temperature</th>
+      <th>humidity</th>
+      <th>url</th>
+      <th>latitude</th>
+      <th>cloudiness</th>
       <th>city</th>
-      <th>driver_count</th>
-      <th>type</th>
-      <th>fare</th>
-      <th>ride_count</th>
-      <th>average_fare</th>
+      <th>longitude</th>
+      <th>wind_speed</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
-      <td>Kelseyland</td>
-      <td>63</td>
-      <td>Urban</td>
-      <td>610.58</td>
-      <td>28</td>
-      <td>21.806429</td>
+      <td>78.80</td>
+      <td>78.0</td>
+      <td>http://api.openweathermap.org/data/2.5/weather...</td>
+      <td>-6.97</td>
+      <td>40.0</td>
+      <td>cabedelo</td>
+      <td>-34.84</td>
+      <td>5.82</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>Nguyenbury</td>
-      <td>8</td>
-      <td>Urban</td>
-      <td>673.39</td>
-      <td>26</td>
-      <td>25.899615</td>
+      <td>48.38</td>
+      <td>99.0</td>
+      <td>http://api.openweathermap.org/data/2.5/weather...</td>
+      <td>32.92</td>
+      <td>92.0</td>
+      <td>talagang</td>
+      <td>72.41</td>
+      <td>4.21</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>East Douglas</td>
-      <td>12</td>
-      <td>Urban</td>
-      <td>575.72</td>
-      <td>22</td>
-      <td>26.169091</td>
+      <td>37.40</td>
+      <td>59.0</td>
+      <td>http://api.openweathermap.org/data/2.5/weather...</td>
+      <td>33.93</td>
+      <td>40.0</td>
+      <td>katsuura</td>
+      <td>134.50</td>
+      <td>14.99</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>West Dawnfurt</td>
-      <td>34</td>
-      <td>Urban</td>
-      <td>647.58</td>
-      <td>29</td>
-      <td>22.330345</td>
+      <td>53.51</td>
+      <td>75.0</td>
+      <td>http://api.openweathermap.org/data/2.5/weather...</td>
+      <td>8.40</td>
+      <td>8.0</td>
+      <td>tchollire</td>
+      <td>14.17</td>
+      <td>2.75</td>
     </tr>
     <tr>
       <th>4</th>
-      <td>Rodriguezburgh</td>
-      <td>52</td>
-      <td>Urban</td>
-      <td>490.65</td>
-      <td>23</td>
-      <td>21.332609</td>
+      <td>80.06</td>
+      <td>99.0</td>
+      <td>http://api.openweathermap.org/data/2.5/weather...</td>
+      <td>-23.12</td>
+      <td>80.0</td>
+      <td>rikitea</td>
+      <td>-134.97</td>
+      <td>16.62</td>
     </tr>
   </tbody>
 </table>
@@ -134,148 +339,15 @@ combined_df.head()
 
 
 ```python
-urban_summary = pd.DataFrame(columns=['average_fare','ride_count'])
-subur_summary = urban_summary.copy()
-rural_summary = urban_summary.copy()
-
-for i, row in combined_df.iterrows():
-    ride_count = 0
-    average_fare = 0
-    if row['ride_count'] > 0:
-        average_fare = '{:.2f}'.format(row['average_fare'])      
-        ride_count = '{:.0f}'.format(row['ride_count'])
-    
-    each = [average_fare, ride_count]
-
-    row_type = row['type']
-    if row_type == "Urban":
-        urban_summary.loc[row['city']] = each
-    elif row_type == "Suburban":
-        subur_summary.loc[row['city']] = each
-    else:
-        rural_summary.loc[row['city']] = each
-
-urban_summary = urban_summary.fillna(0)
-urban_summary['average_fare'] = urban_summary['average_fare'].astype(float)
-urban_summary['ride_count'] = urban_summary['ride_count'].astype(int)
-
-subur_summary = subur_summary.fillna(0)
-subur_summary['average_fare'] = subur_summary['average_fare'].astype(float)
-subur_summary['ride_count'] = subur_summary['ride_count'].astype(int)
-
-rural_summary = rural_summary.fillna(0)
-rural_summary['average_fare'] = rural_summary['average_fare'].astype(float)
-rural_summary['ride_count'] = rural_summary['ride_count'].astype(int)
-
-```
-
-
-```python
 sns.set()
-urban = plt.scatter(urban_summary['ride_count'], urban_summary['average_fare'], edgecolor='black',
-                    marker="o", color="lightcoral", label='Urban', alpha=0.5,
-                    s=urban_summary['ride_count']*10)
-subur = plt.scatter(subur_summary['ride_count'], subur_summary['average_fare'], edgecolor='black',
-                    marker="o", color="lightskyblue", label='Suburban', alpha=0.5,
-                    s=subur_summary['ride_count']*10)
-rural = plt.scatter(rural_summary['ride_count'], rural_summary['average_fare'], edgecolor='black',
-                    marker="o", color="gold", label='Rural', alpha=0.5,
-                    s=rural_summary['ride_count']*10)
-
-plt.grid(True)
-
-plt.title("Pyber Ride Sharing Data (2016)")
-plt.xlabel("Total Number of Rides (Per city)")
-plt.ylabel("Average Fares ($)")
-
-x_max = urban_summary['ride_count'].max() or subur_summary['ride_count'].max() or rural_summary['ride_count'].max()
-plt.xlim(0, x_max + 5)
-y_min = urban_summary['average_fare'].min() or subur_summary['average_fare'].min() or rural_summary['average_fare'].min()
-y_max = urban_summary['average_fare'].max() or subur_summary['average_fare'].max() or rural_summary['average_fare'].max()
-plt.ylim(y_min - 5, y_max + 15)
-
-legend = plt.legend(handles=[urban, subur, rural],loc="best", scatterpoints=1)
-for handle in legend.legendHandles:
-    handle.set_sizes([30.0])
-    
-plt.show()
-
-
-
 ```
 
 
-![png](output_2_0.png)
-
-
-
 ```python
-#colors of each section of the pie chart
-colors = ["gold", "lightskyblue", "lightcoral"]
-#equal axis
-plt.axis("equal")
-
-```
-
-
-
-
-    (-0.055000000000000007,
-     0.055000000000000007,
-     -0.055000000000000007,
-     0.055000000000000007)
-
-
-
-
-```python
-explode = (0, 0, 0.1)
-ride_count = pd.DataFrame(combined_df.groupby('type')['ride_count'].sum())
-plt.pie(ride_count, autopct='%1.1f%%', explode=explode, labels=ride_count.index,
-        colors=colors, shadow=True, startangle=120)
-plt.title("% of Total Rides by City Type", fontsize=12, fontweight="normal")
-plt.figure(figsize=(8,8))
-plt.show()
-```
-
-
-![png](output_4_0.png)
-
-
-
-    <matplotlib.figure.Figure at 0x1cf6b92a9e8>
-
-
-
-```python
-explode = (0, 0, 0.1)
-fare_sum = pd.DataFrame(combined_df.groupby('type')['fare'].sum())
-plt.pie(fare_sum, autopct='%1.1f%%', explode=explode, labels=fare_sum.index,
-        colors=colors, shadow=True, startangle=100)
-plt.title("% of Total Fares by City Type", fontsize=12, fontweight="normal")
-plt.figure(figsize=(8,8))
-plt.show()
-```
-
-
-![png](output_5_0.png)
-
-
-
-    <matplotlib.figure.Figure at 0x1cf6b956128>
-
-
-
-```python
-explode = (0, 0, 0.2)
-extract_data = combined_df.groupby(['type','city','driver_count']).sum()
-extract_data = extract_data.reset_index()
-driver_count = pd.DataFrame(extract_data.groupby('type')['driver_count'].sum())
-
-plt.pie(driver_count, autopct='%1.1f%%', explode=explode, labels=driver_count.index,
-        colors=colors, shadow=True, startangle=140)
-plt.title("% of Total Drivers by City Type", fontsize=12, fontweight="normal")
-plt.figure(figsize=(8,8))
+#distribution of selected coordinates
+#the original list is more uniformedly random
+#this list is not due the exclusion of unavailable weather data 
+plt.scatter(cities_df['latitude'], cities_df['longitude'])
 plt.show()
 ```
 
@@ -284,13 +356,105 @@ plt.show()
 
 
 
-    <matplotlib.figure.Figure at 0x1cf6b956898>
+```python
+plt.scatter(cities_df["temperature"], cities_df["latitude"], marker="o", alpha=0.5,  
+            edgecolor="black", linewidths=1, color="lightpink", s=cities_df["temperature"]*5)
+plt.title("Temperature (°F) vs Latitude")
+plt.xlabel("Temperature (°F)")
+plt.ylabel("Latitude")
+plt.grid(True)
+
+# Save the figure
+plt.savefig("TemperatureLatitudeInSelectCities.png")
+
+# Show plot
+plt.show()
+```
+
+    C:\Users\ng_th\Documents\software\Anaconda\lib\site-packages\matplotlib\collections.py:836: RuntimeWarning: invalid value encountered in sqrt
+      scale = np.sqrt(self._sizes) * dpi / 72.0 * self._factor
+    
 
 
-Observed trends:
+![png](output_7_1.png)
 
-1. Urban cities account for the largest parts of their shares in total rides, total fares, and total drivers. Rural cities have smaller shares in those categories compared to the suburban cities.
 
-2. As the number of rides increases, the average fare stays flat or exhibits a small change for urban and suburban cities. On the contrary, an increase in the number of rides in rural cities may cause the average fare to go up. However, the change is not proportional.
 
-3. The average fare in rural cities spreads wider than suburban and urban cities. It can be as less expensive as it is in urban cities. However, it can be the most expensive of all city types.
+```python
+plt.scatter(cities_df["humidity"], cities_df["latitude"], marker="o", alpha=0.5,
+            edgecolor="black", linewidths=1, color="lightblue", s=cities_df["humidity"]*5)
+plt.title("Humidity (%) vs Latitude")
+plt.xlabel("Humidity (%)")
+plt.ylabel("Latitude")
+plt.grid(True)
+
+# Save the figure
+plt.savefig("HumidityLatitudeInSelectCities.png")
+
+# Show plot
+plt.show()
+```
+
+
+![png](output_8_0.png)
+
+
+
+```python
+plt.scatter(cities_df["cloudiness"], cities_df["latitude"], marker="o", alpha=0.5, 
+            edgecolor="black", linewidths=1, color="lightgreen", s=cities_df["cloudiness"]*5)
+plt.title("Cloudiness (%) vs Latitude")
+plt.xlabel("Cloudiness (%)")
+plt.ylabel("Latitude")
+plt.grid(True)
+
+# Save the figure
+plt.savefig("CloudinessLatitudeInSelectCities.png")
+
+# Show plot
+plt.show()
+```
+
+
+![png](output_9_0.png)
+
+
+
+```python
+plt.scatter(cities_df["wind_speed"], cities_df["latitude"], marker="o", alpha=0.5, 
+            edgecolor="black", linewidths=1, color="mediumpurple", s=cities_df["wind_speed"]*5)
+plt.title("Wind Speed (mph) vs Latitude")
+plt.xlabel("Wind Speed (mph)")
+plt.ylabel("Latitude")
+plt.grid(True)
+
+# Save the figure
+plt.savefig("WindSpeedLatitudeInSelectCities.png")
+
+# Show plot
+plt.show()
+```
+
+
+![png](output_10_0.png)
+
+
+
+```python
+#write to csv file    
+with open('CityList.csv', 'w', newline="") as csvFile:
+    csvWriter = csv.writer(csvFile, delimiter=',')
+    #headers
+    csvWriter.writerow(["","City Name","Weather URL"])
+    #zipped lists
+    csvWriter.writerows(zip(cities_df.index, cities_df["city"], cities_df["url"]))
+```
+
+Observed trends (based on the selection of world cities)
+
+1. The northern hemisphere is cooler than the equator and the southern hemisphere.
+2. The northern hemisphere is more humid than the southern hemisphere. 
+3. The cloudiness is even distributed across latitudes.
+
+
+
