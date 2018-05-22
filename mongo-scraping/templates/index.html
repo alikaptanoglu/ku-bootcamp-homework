@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Mission to Mars</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+  </head>
+
+  <body>
+
+    <div class="container">
+    
+        <div class="row">
+            <div class="col-md-12">
+              <h1 class="header">Mission to Mars</h1>
+              <a class="btn btn-primary" href="/scrape" role="button">scrape new data</a>
+            </div>
+        </div>    
+        <div class="row">
+            <div class="section"> Latest Mars News </div>
+            <div class="title"> {{ planetdetails.latest_news_title }} </div>
+            <div class="text"> {{ planetdetails.latest_news_para }} </div>
+        </div>
+        <div>&#160;</div>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="section"> Featured Mars Image </div>
+                <img src="{{ planetdetails.feature_image_url }}" alt="Featured Mars Image" height="100%" width="100%"</img>
+            </div>
+            <div>&#160;</div>
+            <div class="col-md-4">
+                <div class="title"> Current Weather on Mars </div>
+                <div> {{ planetdetails.mars_weather }} </div>
+                <div>&#160;</div>
+                <div class="title"> Mars Facts </div>
+                <div> {{ planetdetails.facts | safe }} </div>
+            </div>
+        </div>       
+        <div>&#160;</div>
+        <div class="row">
+            <div class="section-centered"> Mars Hemispheres </div>
+            <div>&#160;</div>
+            {% for each in planetimages %}
+                <div class="col-md-6">
+                    <img src="{{ each.image_url }}" alt="{{ each.label }} Image" height="100%" width="100%"</img>
+                    <div class="section"> {{ each.label }} </div>
+                    <div>&#160;</div>
+                  </div>
+            {%endfor%}
+        </div>       
+    </div>    
+    
+
+    <style>
+      .col-md-12 {
+        padding: 5px;
+        margin-bottom: 5px;
+        background-color: rgb(250, 248, 248);
+        text-align: center;
+      }
+      .col-md-8 {
+        padding: 5px;
+        margin-bottom: 5px;
+        background-color: white;
+      }
+      .col-md-4 {
+        padding: 5px;
+        margin-bottom: 5px;
+        background-color: white;
+      }
+      .header {
+        height: 35px;
+        width: 100%;
+      }
+      .section {
+        padding: 10px 10px 0px 10px;
+        font-size: 20px;
+        font-weight: bold;
+        background-color: white;
+      }
+      .section-centered {
+        padding: 10px 10px 0px 10px;
+        font-size: 20px;
+        font-weight: bold;
+        background-color: white;
+        text-align: center;
+      }
+      .title {
+        padding: 5px 10px 0px 10px;
+        font-size: 14px;
+        font-weight: bold;
+        background-color: white;
+      }
+      .text {
+        padding: 5px 10px 0px 10px;
+        font-weight: normal;
+        background-color: white;
+      }
+
+    </style>
+
+    <script>
+    </script>
+      
+  </body>
+
+</html>
