@@ -1,0 +1,14 @@
+body span h1 {
+    padding: 5px;
+    margin: 0;
+    width: 90%;
+}
+
+.col-md-12 {
+    text-align: left;
+}
+
+.table-striped tbody tr:nth-child(odd) td,
+.table-striped tbody tr:nth-child(odd) th {
+	background-color: ivory;
+}
